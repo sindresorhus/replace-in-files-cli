@@ -1,0 +1,55 @@
+{
+	"name": "replace-in-files-cli",
+	"version": "0.0.0",
+	"description": "Replace matching strings and regexes in files",
+	"license": "MIT",
+	"repository": "sindresorhus/replace-in-files-cli",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"bin": {
+		"replace-in-files": "cli.js"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"cli.js",
+		"api.js"
+	],
+	"keywords": [
+		"cli-app",
+		"cli",
+		"replace",
+		"matching",
+		"match",
+		"matches",
+		"find",
+		"search",
+		"string",
+		"regex",
+		"regexp",
+		"pattern",
+		"files",
+		"file",
+		"text",
+		"contents"
+	],
+	"dependencies": {
+		"arrify": "^2.0.1",
+		"escape-string-regexp": "^2.0.0",
+		"meow": "^5.0.0",
+		"write-file-atomic": "^3.0.0"
+	},
+	"devDependencies": {
+		"ava": "^2.1.0",
+		"execa": "^1.0.0",
+		"temp-write": "^4.0.0",
+		"xo": "^0.24.0"
+	}
+}
