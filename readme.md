@@ -30,3 +30,5 @@ $ replace-in-files --help
 
   You can use the same replacement patterns as with `String#replace()`, like `$&`.
 ```
+
+Real-world use-case: [Bumping version number in a file when publishing to npm](https://github.com/sindresorhus/modern-normalize/commit/c1d65e3f7daba2b695ccf837d2aef19d586d1ca6)
