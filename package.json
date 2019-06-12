@@ -1,6 +1,6 @@
 {
 	"name": "replace-in-files-cli",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Replace matching strings and regexes in files",
 	"license": "MIT",
 	"repository": "sindresorhus/replace-in-files-cli",
