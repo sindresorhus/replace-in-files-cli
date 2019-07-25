@@ -14,3 +14,10 @@ test('--regex', async t => {
 	await execa('./cli.js', ['--regex=\\bb.*?\\b', '--replacement=foo', filePath]);
 	t.is(fs.readFileSync(filePath, 'utf8'), 'foo foo foo');
 });
+
+test('--string', async t => {
+	const filePath = await tempWrite(',');
+	await execa('./cli.js', ['--string=,', '--replacement=\n', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), '\n');
+});
+
