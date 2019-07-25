@@ -15,7 +15,7 @@ test('--regex', async t => {
 	t.is(fs.readFileSync(filePath, 'utf8'), 'foo foo foo');
 });
 
-test('--string', async t => {
+test('test new line', async t => {
 	const filePath = await tempWrite(',');
 	await execa('./cli.js', ['--string=,', '--replacement=\n', filePath]);
 	t.is(fs.readFileSync(filePath, 'utf8'), '\n');

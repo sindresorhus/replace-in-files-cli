@@ -28,11 +28,11 @@ module.exports = async (filePaths, {find, replacement, ignoreCase} = {}) => {
 
 	// Replace replacement string with string unescaped (only one backslash) if it is escaped
 	replacement = replacement
-	.replace(/\\n/g, "\n")
-	.replace(/\\r/g, "\r")
-	.replace(/\\t/g, "\t")
-	.replace(/\\b/g, "\b")
-	.replace(/\\f/g, "\f");
+		.replace(/\\n/g, '\n')
+		.replace(/\\r/g, '\r')
+		.replace(/\\t/g, '\t')
+		.replace(/\\b/g, '\b')
+		.replace(/\\f/g, '\f');
 
 	// Deduplicate
 	filePaths = [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
