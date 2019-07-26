@@ -15,9 +15,20 @@ test('--regex', async t => {
 	t.is(fs.readFileSync(filePath, 'utf8'), 'foo foo foo');
 });
 
-test('test new line', async t => {
-	const filePath = await tempWrite(',');
+test('new lines and tabs', async t => {
+	let filePath = await tempWrite('a,b,c');
 	await execa('./cli.js', ['--string=,', '--replacement=\n', filePath]);
-	t.is(fs.readFileSync(filePath, 'utf8'), '\n');
+	t.is(fs.readFileSync(filePath, 'utf8'), 'a\nb\nc');
+	filePath = await tempWrite('a,b,c');
+	await execa('./cli.js', ['--string=,', '--replacement=\t', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'a\tb\tc');
+	filePath = await tempWrite('a,b,c');
+	await execa('./cli.js', ['--string=,', '--replacement=\r', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'a\rb\rc');
 });
 
+test('multiple new lines and tabs', async t => {
+	const filePath = await tempWrite('a,b,c');
+	await execa('./cli.js', ['--string=,', '--replacement=\n\n\t\r', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'a\n\n\t\rb\n\n\t\rc');
+});
