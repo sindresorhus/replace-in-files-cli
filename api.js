@@ -26,7 +26,7 @@ module.exports = async (filePaths, {find, replacement, ignoreCase} = {}) => {
 		throw new Error('The `replacement` option is required');
 	}
 
-	// Replace replacement string with string unescaped (only one backslash) if it is escaped
+	// Replace the replacement string with the string unescaped (only one backslash) if it's escaped
 	replacement = replacement
 		.replace(/\\n/g, '\n')
 		.replace(/\\r/g, '\r')
