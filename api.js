@@ -26,6 +26,12 @@ module.exports = async (filePaths, {find, replacement, ignoreCase} = {}) => {
 		throw new Error('The `replacement` option is required');
 	}
 
+	// Replace the replacement string with the string unescaped (only one backslash) if it's escaped
+	replacement = replacement
+		.replace(/\\n/g, '\n')
+		.replace(/\\r/g, '\r')
+		.replace(/\\t/g, '\t');
+
 	// Deduplicate
 	filePaths = [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
 
