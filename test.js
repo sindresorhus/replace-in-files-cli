@@ -1,4 +1,6 @@
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import test from 'ava';
 import execa from 'execa';
 import tempWrite from 'temp-write';
@@ -33,4 +35,20 @@ test('multiple newlines and tabs', async t => {
 	const filePath = await tempWrite('a,b,c');
 	await execa('./cli.js', ['--string=,', '--replacement=\\n\\n\\t\\r', filePath]);
 	t.is(fs.readFileSync(filePath, 'utf8'), 'a\n\n\t\rb\n\n\t\rc');
+});
+
+test('globs', async t => {
+	const filePaths = [await tempWrite('foo bar foo', 'a.glob'), await tempWrite('foo bar foo', 'b.glob')];
+	const tmpdir = os.tmpdir();
+
+	await execa('./cli.js', ['--string=bar', '--replacement=foo', path.join(tmpdir, '*', '*.glob')]);
+	t.is(fs.readFileSync(filePaths[0], 'utf8'), 'foo foo foo');
+	t.is(fs.readFileSync(filePaths[1], 'utf8'), 'foo foo foo');
+});
+
+test('no globs', async t => {
+	const filePaths = [await tempWrite('foo bar foo', '*.glob'), await tempWrite('foo bar foo', 'foo.glob')];
+	const dirnames = filePaths.map(filePath => path.dirname(filePath));
+
+	await t.throwsAsync(async () => execa('./cli.js', ['--string=bar', '--replacement=foo', '--no-glob', path.join(dirnames[0], '*.glob'), path.join(dirnames[1], '*.glob')]), {code: 1, message: /ENOENT/});
 });
