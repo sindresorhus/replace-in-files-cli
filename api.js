@@ -5,13 +5,14 @@ const fs = require('fs');
 const writeFileAtomic = require('write-file-atomic');
 const escapeStringRegexp = require('escape-string-regexp');
 const arrify = require('arrify');
+const globby = require('globby');
 
 const readFile = promisify(fs.readFile);
 
 // TODO(sindresorhus): I will extract this to a separate module at some point when it's more mature.
 // `find` is expected to be `Array<string | RegExp>`
 // The `ignoreCase` option overrides the `i` flag for regexes in `find`
-module.exports = async (filePaths, {find, replacement, ignoreCase} = {}) => {
+module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) => {
 	filePaths = arrify(filePaths);
 
 	if (filePaths.length === 0) {
@@ -32,8 +33,7 @@ module.exports = async (filePaths, {find, replacement, ignoreCase} = {}) => {
 		.replace(/\\r/g, '\r')
 		.replace(/\\t/g, '\t');
 
-	// Deduplicate
-	filePaths = [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
+	filePaths = glob ? await globby(filePaths) : [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
 
 	find = find.map(element => {
 		const iFlag = ignoreCase ? 'i' : '';

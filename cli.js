@@ -13,10 +13,12 @@ const cli = meow(`
 	  --string          String to find  (Can be set multiple times)
 	  --replacement     Replacement string  (Required)
 	  --ignore-case     Search case-insensitively
+	  --no-glob         Disable globbing
 
 	Examples
 	  $ replace-in-files --string='horse' --regex='unicorn|rainbow' --replacement='🦄' foo.md
 	  $ replace-in-files --regex='v\\d+\\.\\d+\\.\\d+' --replacement=v$npm_package_version foo.css
+	  $ replace-in-files --string='blob' --replacement='blog' 'some/**/[gb]lob/*' '!some/glob/foo'
 
 	You can use the same replacement patterns as with \`String#replace()\`, like \`$&\`.
 `, {
@@ -33,6 +35,10 @@ const cli = meow(`
 		ignoreCase: {
 			type: 'boolean',
 			default: false
+		},
+		glob: {
+			type: 'boolean',
+			default: true
 		}
 	}
 });
@@ -60,6 +66,7 @@ if (cli.flags.replacement === undefined) {
 			...arrify(cli.flags.regex).map(regexString => new RegExp(regexString, 'g'))
 		],
 		replacement: cli.flags.replacement,
-		ignoreCase: cli.flags.ignoreCase
+		ignoreCase: cli.flags.ignoreCase,
+		glob: cli.flags.glob
 	});
 })();
