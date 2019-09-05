@@ -50,5 +50,17 @@ test('no globs', async t => {
 	const filePaths = [await tempWrite('foo bar foo', '*.glob'), await tempWrite('foo bar foo', 'foo.glob')];
 	const dirnames = filePaths.map(filePath => path.dirname(filePath));
 
-	await t.throwsAsync(async () => execa('./cli.js', ['--string=bar', '--replacement=foo', '--no-glob', path.join(dirnames[0], '*.glob'), path.join(dirnames[1], '*.glob')]), {code: 1, message: /ENOENT/});
+	await t.throwsAsync(
+		execa('./cli.js', [
+			'--string=bar',
+			'--replacement=foo',
+			'--no-glob',
+			path.join(dirnames[0], '*.glob'),
+			path.join(dirnames[1], '*.glob')
+		]),
+		{
+			code: 1,
+			message: /ENOENT/
+		}
+	);
 });
