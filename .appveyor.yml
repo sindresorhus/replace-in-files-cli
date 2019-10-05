@@ -1,0 +1,43 @@
+# spell-checker:ignore repo
+
+version: "{build} ~ {branch}"
+
+branches:
+  except:
+    - gh-pages
+
+environment:
+  matrix:
+    - nodejs_version: "12"
+    - nodejs_version: "10"
+    - nodejs_version: "8"
+    # - nodejs_version: "6"
+    # - nodejs_version: "4"
+
+# platform:
+#   - x86
+#   - x64
+
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  # - ps: Install-Product node $env:nodejs_version $env:platform
+  - ps: Install-Product node $env:nodejs_version
+  # install modules
+  - npm install
+
+# Post-install test scripts.
+test_script:
+  # Output useful info for debugging.
+  - node --version
+  - npm --version
+  # run tests
+  - npm test
+
+# After successful build.
+on_success:
+  # Post code coverage information
+  # - npm run coverage
+
+# Don't actually build.
+build: off
