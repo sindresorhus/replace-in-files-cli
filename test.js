@@ -46,7 +46,8 @@ test('globs', async t => {
 });
 
 test('no globs', async t => {
-	const filePaths = [await tempWrite('foo bar foo', '*.glob'), await tempWrite('foo bar foo', 'foo.glob')];
+	const isWinOS = /^win/i.test(process.platform);
+	const filePaths = [await tempWrite('foo bar foo', isWinOS ? 'STAR.glob' : '*.glob'), await tempWrite('foo bar foo', 'foo.glob')];
 	const dirnames = filePaths.map(filePath => path.dirname(filePath));
 
 	await t.throwsAsync(
