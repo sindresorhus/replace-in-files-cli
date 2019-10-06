@@ -1,7 +1,10 @@
 'use strict';
+const isWinOS = /^win/i.test(process.platform);
+
 const {promisify} = require('util');
 const path = require('path');
 const fs = require('fs');
+const normalizePath = isWinOS ? require('normalize-path') : s => s;
 const writeFileAtomic = require('write-file-atomic');
 const escapeStringRegexp = require('escape-string-regexp');
 const arrify = require('arrify');
@@ -33,7 +36,7 @@ module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) =
 		.replace(/\\r/g, '\r')
 		.replace(/\\t/g, '\t');
 
-	filePaths = glob ? await globby(filePaths) : [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
+	filePaths = glob ? await globby(filePaths.map(filePath => normalizePath(filePath))) : [...new Set(filePaths.map(filePath => normalizePath(path.resolve(filePath))))];
 
 	find = find.map(element => {
 		const iFlag = ignoreCase ? 'i' : '';
