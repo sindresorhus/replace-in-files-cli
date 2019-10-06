@@ -1,5 +1,4 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import test from 'ava';
 import execa from 'execa';
@@ -39,9 +38,9 @@ test('multiple newlines and tabs', async t => {
 
 test('globs', async t => {
 	const filePaths = [await tempWrite('foo bar foo', 'a.glob'), await tempWrite('foo bar foo', 'b.glob')];
-	const tmpdir = os.tmpdir();
+	const dirnames = filePaths.map(filePath => path.dirname(filePath));
 
-	await execa('./cli.js', ['--string=bar', '--replacement=foo', path.join(tmpdir, '*', '*.glob')]);
+	await execa('./cli.js', ['--string=bar', '--replacement=foo', path.join(dirnames[0], '*.glob'), path.join(dirnames[1], '*.glob')]);
 	t.is(fs.readFileSync(filePaths[0], 'utf8'), 'foo foo foo');
 	t.is(fs.readFileSync(filePaths[1], 'utf8'), 'foo foo foo');
 });
