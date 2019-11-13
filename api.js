@@ -1,10 +1,10 @@
 'use strict';
-const isWinOS = /^win/i.test(process.platform);
+const isWindowsOS = process.platform === 'win32';
 
 const {promisify} = require('util');
 const path = require('path');
 const fs = require('fs');
-const normalizePath = isWinOS ? require('normalize-path') : s => s;
+const normalizePath = isWindowsOS ? require('normalize-path') : s => s;
 const writeFileAtomic = require('write-file-atomic');
 const escapeStringRegexp = require('escape-string-regexp');
 const arrify = require('arrify');
