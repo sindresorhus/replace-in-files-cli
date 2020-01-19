@@ -2,6 +2,7 @@
 const {promisify} = require('util');
 const path = require('path');
 const fs = require('fs');
+const normalizePath = process.platform === 'win32' ? require('normalize-path') : x => x;
 const writeFileAtomic = require('write-file-atomic');
 const escapeStringRegexp = require('escape-string-regexp');
 const arrify = require('arrify');
@@ -33,7 +34,8 @@ module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) =
 		.replace(/\\r/g, '\r')
 		.replace(/\\t/g, '\t');
 
-	filePaths = glob ? await globby(filePaths) : [...new Set(filePaths.map(filePath => path.resolve(filePath)))];
+	// TODO: Drop the `normalizePath` call when https://github.com/mrmlnc/fast-glob/issues/240 is fixed.
+	filePaths = glob ? await globby(filePaths.map(filePath => normalizePath(filePath))) : [...new Set(filePaths.map(filePath => normalizePath(path.resolve(filePath))))];
 
 	find = find.map(element => {
 		const iFlag = ignoreCase ? 'i' : '';
