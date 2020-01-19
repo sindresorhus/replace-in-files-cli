@@ -34,6 +34,7 @@ module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) =
 		.replace(/\\r/g, '\r')
 		.replace(/\\t/g, '\t');
 
+	// TODO: Drop the `normalizePath` call when https://github.com/mrmlnc/fast-glob/issues/240 is fixed.
 	filePaths = glob ? await globby(filePaths.map(filePath => normalizePath(filePath))) : [...new Set(filePaths.map(filePath => normalizePath(path.resolve(filePath))))];
 
 	find = find.map(element => {
