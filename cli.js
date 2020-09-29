@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 const meow = require('meow');
-const arrify = require('arrify');
 const replaceInFiles = require('./api');
 
 const cli = meow(`
@@ -24,13 +23,16 @@ const cli = meow(`
 `, {
 	flags: {
 		regex: {
-			type: 'string'
+			type: 'string',
+			isMultiple: true
 		},
 		string: {
-			type: 'string'
+			type: 'string',
+			isMultiple: true
 		},
 		replacement: {
-			type: 'string'
+			type: 'string',
+			isRequired: true
 		},
 		ignoreCase: {
 			type: 'boolean',
@@ -53,17 +55,12 @@ if (!cli.flags.regex && !cli.flags.string) {
 	process.exit(1);
 }
 
-// TODO: Use the required functionality in `meow` when v6 is out
-if (cli.flags.replacement === undefined) {
-	console.error('The `--replacement` flag is required');
-	process.exit(1);
-}
-
 (async () => {
 	await replaceInFiles(cli.input, {
 		find: [
-			...arrify(cli.flags.string),
-			...arrify(cli.flags.regex).map(regexString => new RegExp(regexString, 'g'))
+			// TODO: Remove the `|| []` when `meow` 7.1.2 is out.
+			...(cli.flags.string || []),
+			...(cli.flags.regex || []).map(regexString => new RegExp(regexString, 'g'))
 		],
 		replacement: cli.flags.replacement,
 		ignoreCase: cli.flags.ignoreCase,
