@@ -1,4 +1,4 @@
-# replace-in-files-cli [![Build Status](https://travis-ci.com/sindresorhus/replace-in-files-cli.svg?branch=master)](https://travis-ci.com/github/sindresorhus/replace-in-files-cli)
+# replace-in-files-cli
 
 > Replace matching strings and regexes in files
 
