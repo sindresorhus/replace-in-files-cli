@@ -1,20 +1,18 @@
-'use strict';
-const {promisify} = require('util');
-const path = require('path');
-const fs = require('fs');
-const normalizePath = process.platform === 'win32' ? require('normalize-path') : x => x;
-const writeFileAtomic = require('write-file-atomic');
-const escapeStringRegexp = require('escape-string-regexp');
-const arrify = require('arrify');
-const globby = require('globby');
+import process from 'node:process';
+import path from 'node:path';
+import {promises as fsPromises} from 'node:fs';
+import normalizePath_ from 'normalize-path';
+import writeFileAtomic from 'write-file-atomic';
+import escapeStringRegexp from 'escape-string-regexp';
+import {globby} from 'globby';
 
-const readFile = promisify(fs.readFile);
+const normalizePath = process.platform === 'win32' ? normalizePath_ : x => x;
 
 // TODO(sindresorhus): I will extract this to a separate module at some point when it's more mature.
 // `find` is expected to be `Array<string | RegExp>`
 // The `ignoreCase` option overrides the `i` flag for regexes in `find`
-module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) => {
-	filePaths = arrify(filePaths);
+export default async function replaceInFiler(filePaths, {find, replacement, ignoreCase, glob} = {}) {
+	filePaths = [filePaths].flat();
 
 	if (filePaths.length === 0) {
 		return;
@@ -48,7 +46,7 @@ module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) =
 	});
 
 	await Promise.all(filePaths.map(async filePath => {
-		const string = await readFile(filePath, 'utf8');
+		const string = await fsPromises.readFile(filePath, 'utf8');
 
 		let newString = string;
 		for (const pattern of find) {
@@ -61,4 +59,4 @@ module.exports = async (filePaths, {find, replacement, ignoreCase, glob} = {}) =
 
 		await writeFileAtomic(filePath, newString);
 	}));
-};
+}

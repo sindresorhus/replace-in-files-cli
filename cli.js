@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-'use strict';
-const meow = require('meow');
-const replaceInFiles = require('./api');
+import process from 'node:process';
+import meow from 'meow';
+import replaceInFiles from './api.js';
 
 const cli = meow(`
 	Usage
@@ -21,28 +21,29 @@ const cli = meow(`
 
 	You can use the same replacement patterns as with \`String#replace()\`, like \`$&\`.
 `, {
+	importMeta: import.meta,
 	flags: {
 		regex: {
 			type: 'string',
-			isMultiple: true
+			isMultiple: true,
 		},
 		string: {
 			type: 'string',
-			isMultiple: true
+			isMultiple: true,
 		},
 		replacement: {
 			type: 'string',
-			isRequired: true
+			isRequired: true,
 		},
 		ignoreCase: {
 			type: 'boolean',
-			default: false
+			default: false,
 		},
 		glob: {
 			type: 'boolean',
-			default: true
-		}
-	}
+			default: true,
+		},
+	},
 });
 
 if (cli.input.length === 0) {
@@ -58,12 +59,11 @@ if (!cli.flags.regex && !cli.flags.string) {
 (async () => {
 	await replaceInFiles(cli.input, {
 		find: [
-			// TODO: Remove the `|| []` when `meow` 7.1.2 is out.
-			...(cli.flags.string || []),
-			...(cli.flags.regex || []).map(regexString => new RegExp(regexString, 'g'))
+			...cli.flags.string,
+			...cli.flags.regex.map(regexString => new RegExp(regexString, 'g')),
 		],
 		replacement: cli.flags.replacement,
 		ignoreCase: cli.flags.ignoreCase,
-		glob: cli.flags.glob
+		glob: cli.flags.glob,
 	});
 })();

@@ -4,8 +4,8 @@
 
 ## Install
 
-```
-$ npm install --global replace-in-files-cli
+```sh
+npm install --global replace-in-files-cli
 ```
 
 ## Usage

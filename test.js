@@ -1,5 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import process from 'node:process';
 import test from 'ava';
 import execa from 'execa';
 import tempWrite from 'temp-write';
@@ -55,11 +56,10 @@ test('no globs', async t => {
 			'--replacement=foo',
 			'--no-glob',
 			path.join(dirnames[0], '*.glob'),
-			path.join(dirnames[1], '*.glob')
+			path.join(dirnames[1], '*.glob'),
 		]),
 		{
-			code: 1,
-			message: /ENOENT/
-		}
+			message: /ENOENT/,
+		},
 	);
 });
