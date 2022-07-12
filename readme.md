@@ -32,3 +32,5 @@ $ replace-in-files --help
 ```
 
 Real-world use-case: [Bumping version number in a file when publishing to npm](https://github.com/sindresorhus/modern-normalize/commit/c1d65e3f7daba2b695ccf837d2aef19d586d1ca6)
+
+The regex should be [JavaScript flavor](https://www.regular-expressions.info/javascript.html).
