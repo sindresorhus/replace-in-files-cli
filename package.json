@@ -11,7 +11,10 @@
 		"url": "https://sindresorhus.com"
 	},
 	"type": "module",
-	"exports": "./api.js",
+	"exports": {
+		"types": "./api.d.ts",
+		"default": "./api.js"
+	},
 	"bin": {
 		"replace-in-files": "./cli.js"
 	},
@@ -24,7 +27,8 @@
 	},
 	"files": [
 		"cli.js",
-		"api.js"
+		"api.js",
+		"api.d.ts"
 	],
 	"keywords": [
 		"cli-app",
