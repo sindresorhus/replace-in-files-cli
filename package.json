@@ -11,8 +11,10 @@
 		"url": "https://sindresorhus.com"
 	},
 	"type": "module",
-	"types": "./types.d.ts",
-	"exports": "./api.js",
+	"exports": {
+		"types": "./api.d.ts",
+		"default": "./api.js"
+	},
 	"bin": {
 		"replace-in-files": "./cli.js"
 	},
