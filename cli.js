@@ -56,14 +56,12 @@ if (!cli.flags.regex && !cli.flags.string) {
 	process.exit(1);
 }
 
-(async () => {
-	await replaceInFiles(cli.input, {
-		find: [
-			...cli.flags.string,
-			...cli.flags.regex.map(regexString => new RegExp(regexString, 'g')),
-		],
-		replacement: cli.flags.replacement,
-		ignoreCase: cli.flags.ignoreCase,
-		glob: cli.flags.glob,
-	});
-})();
+await replaceInFiles(cli.input, {
+	find: [
+		...cli.flags.string,
+		...cli.flags.regex.map(regexString => new RegExp(regexString, 'g')),
+	],
+	replacement: cli.flags.replacement,
+	ignoreCase: cli.flags.ignoreCase,
+	glob: cli.flags.glob,
+});

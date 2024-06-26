@@ -28,11 +28,11 @@ export default async function replaceInFiler(filePaths, {find, replacement, igno
 
 	// Replace the replacement string with the string unescaped (only one backslash) if it's escaped
 	replacement = replacement
-		.replace(/\\n/g, '\n')
-		.replace(/\\r/g, '\r')
-		.replace(/\\t/g, '\t');
+		.replaceAll('\\n', '\n')
+		.replaceAll('\\r', '\r')
+		.replaceAll('\\t', '\t');
 
-	// TODO: Drop the `normalizePath` call when https://github.com/mrmlnc/fast-glob/issues/240 is fixed.
+	// TODO: Drop the `normalizePath` call when `convertPathToPattern` from `fast-glob` is added to globby.
 	filePaths = glob ? await globby(filePaths.map(filePath => normalizePath(filePath))) : [...new Set(filePaths.map(filePath => normalizePath(path.resolve(filePath))))];
 
 	find = find.map(element => {

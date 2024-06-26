@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import test from 'ava';
-import execa from 'execa';
+import {execa} from 'execa';
 import tempWrite from 'temp-write';
 
 test('--string', async t => {
