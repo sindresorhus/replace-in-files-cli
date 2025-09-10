@@ -63,3 +63,30 @@ test('no globs', async t => {
 		},
 	);
 });
+
+test('--dry-run shows changes without modifying files', async t => {
+	const filePath = await tempWrite('foo bar foo');
+	const {stdout} = await execa('./cli.js', ['--dry-run', '--string=bar', '--replacement=baz', filePath]);
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'foo bar foo');
+	t.true(stdout.includes(filePath));
+	t.true(stdout.includes('foo bar foo'));
+	t.true(stdout.includes('foo baz foo'));
+});
+
+test('--dry-run with no matches', async t => {
+	const filePath = await tempWrite('foo bar foo');
+	const {stdout} = await execa('./cli.js', ['--dry-run', '--string=notfound', '--replacement=replacement', filePath]);
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'foo bar foo');
+	t.is(stdout.trim(), 'No matches found.');
+});
+
+test('--dry-run with regex', async t => {
+	const filePath = await tempWrite('version 1.2.3 here');
+	const {stdout} = await execa('./cli.js', ['--dry-run', '--regex=\\d+\\.\\d+\\.\\d+', '--replacement=2.0.0', filePath]);
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'version 1.2.3 here');
+	t.true(stdout.includes('version 1.2.3 here'));
+	t.true(stdout.includes('version 2.0.0 here'));
+});

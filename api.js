@@ -11,7 +11,7 @@ const normalizePath = process.platform === 'win32' ? normalizePath_ : x => x;
 // TODO(sindresorhus): I will extract this to a separate module at some point when it's more mature.
 // `find` is expected to be `Array<string | RegExp>`
 // The `ignoreCase` option overrides the `i` flag for regexes in `find`
-export default async function replaceInFiler(filePaths, {find, replacement, ignoreCase, glob} = {}) {
+export default async function replaceInFiler(filePaths, {find, replacement, ignoreCase, glob, dryRun} = {}) {
 	filePaths = [filePaths].flat();
 
 	if (filePaths.length === 0) {
@@ -45,6 +45,8 @@ export default async function replaceInFiler(filePaths, {find, replacement, igno
 		return new RegExp(element.source, `${element.flags.replace('i', '')}${iFlag}`);
 	});
 
+	const changes = [];
+
 	await Promise.all(filePaths.map(async filePath => {
 		const string = await fsPromises.readFile(filePath, 'utf8');
 
@@ -57,6 +59,18 @@ export default async function replaceInFiler(filePaths, {find, replacement, igno
 			return;
 		}
 
-		await writeFileAtomic(filePath, newString);
+		if (dryRun) {
+			changes.push({
+				filePath,
+				originalContent: string,
+				newContent: newString,
+			});
+		} else {
+			await writeFileAtomic(filePath, newString);
+		}
 	}));
+
+	if (dryRun) {
+		return changes;
+	}
 }

@@ -22,11 +22,13 @@ $ replace-in-files --help
     --replacement     Replacement string  (Required)
     --ignore-case     Search case-insensitively
     --no-glob         Disable globbing
+    --dry-run         Show what would be replaced without making changes
 
   Examples
     $ replace-in-files --string='horse' --regex='unicorn|rainbow' --replacement='🦄' foo.md
     $ replace-in-files --regex='v\d+\.\d+\.\d+' --replacement=v$npm_package_version foo.css
     $ replace-in-files --string='blob' --replacement='blog' 'some/**/[gb]lob/*' '!some/glob/foo'
+    $ replace-in-files --dry-run --string='old' --replacement='new' file.txt
 
   You can use the same replacement patterns as with `String#replace()`, like `$&`.
 ```

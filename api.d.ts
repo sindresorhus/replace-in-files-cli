@@ -1,3 +1,9 @@
+export type FileChange = {
+	filePath: string;
+	originalContent: string;
+	newContent: string;
+};
+
 export default function replaceInFiles(
 	path: string | string[],
 	options: {
@@ -5,5 +11,6 @@ export default function replaceInFiles(
 		replacement: string;
 		ignoreCase?: boolean;
 		glob?: boolean;
+		dryRun?: boolean;
 	},
-): Promise<void>;
+): Promise<void | FileChange[]>;
