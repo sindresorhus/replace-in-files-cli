@@ -23,6 +23,9 @@ const cli = meow(`
 	  $ replace-in-files --dry-run --string='old' --replacement='new' file.txt
 
 	You can use the same replacement patterns as with \`String#replace()\`, like \`$&\`.
+
+	When working with quotes in shell commands, escape them with backslashes:
+	  $ replace-in-files --string='\\"use strict\\";' --replacement='\\"use strict\\";\\nrequire(\\"module\\");' file.js
 `, {
 	importMeta: import.meta,
 	flags: {

@@ -31,6 +31,9 @@ $ replace-in-files --help
     $ replace-in-files --dry-run --string='old' --replacement='new' file.txt
 
   You can use the same replacement patterns as with `String#replace()`, like `$&`.
+
+  When working with quotes in shell commands, escape them with backslashes:
+    $ replace-in-files --string='\"use strict\";' --replacement='\"use strict\";\nrequire(\"module\");' file.js
 ```
 
 Real-world use-case: [Bumping version number in a file when publishing to npm](https://github.com/sindresorhus/modern-normalize/commit/c1d65e3f7daba2b695ccf837d2aef19d586d1ca6)
