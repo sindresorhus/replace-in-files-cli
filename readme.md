@@ -39,3 +39,36 @@ $ replace-in-files --help
 Real-world use-case: [Bumping version number in a file when publishing to npm](https://github.com/sindresorhus/modern-normalize/commit/c1d65e3f7daba2b695ccf837d2aef19d586d1ca6)
 
 The regex should be [JavaScript flavor](https://www.regular-expressions.info/javascript.html).
+
+## Programmatic API
+
+You can also use this package programmatically:
+
+```js
+import replaceInFiles from 'replace-in-files-cli';
+
+// Find and replace
+await replaceInFiles('*.js', {
+	find: ['old', /version \d+/],
+	replacement: 'new'
+});
+
+// Transform entire file content
+await replaceInFiles('*.js', {
+	transform: (content, filePath) => `/* Banner */\n${content}`
+});
+
+// Combine find/replace with transform (transform runs after find/replace)
+await replaceInFiles('*.js', {
+	find: ['old'],
+	replacement: 'new', 
+	transform: (content, filePath) => `/* ${filePath} */\n${content}`
+});
+```
+
+### Transform Option
+
+The `transform` option provides full control over file content:
+- **Standalone**: Use alone for prepend, append, or complex transformations
+- **Combined**: Use with `find`/`replacement` - transform runs after find/replace operations
+- **Parameters**: Receives `(content, filePath)` for context-aware transformations

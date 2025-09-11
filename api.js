@@ -1,6 +1,6 @@
 import process from 'node:process';
 import path from 'node:path';
-import {promises as fsPromises} from 'node:fs';
+import {promises as fs} from 'node:fs';
 import normalizePath_ from 'normalize-path';
 import writeFileAtomic from 'write-file-atomic';
 import escapeStringRegexp from 'escape-string-regexp';
@@ -8,66 +8,126 @@ import {globby} from 'globby';
 
 const normalizePath = process.platform === 'win32' ? normalizePath_ : x => x;
 
-// TODO(sindresorhus): I will extract this to a separate module at some point when it's more mature.
-// `find` is expected to be `Array<string | RegExp>`
-// The `ignoreCase` option overrides the `i` flag for regexes in `find`
-export default async function replaceInFiler(filePaths, {find, replacement, ignoreCase, glob, dryRun} = {}) {
-	filePaths = [filePaths].flat();
-
-	if (filePaths.length === 0) {
-		return;
+const toArray = value => {
+	if (value === undefined) {
+		return [];
 	}
 
-	if (find.length === 0) {
-		throw new Error('Expected at least one `find` pattern');
+	return Array.isArray(value) ? value : [value];
+};
+
+const normalizeRegex = (pattern, forceIgnoreCase) => {
+	if (!(pattern instanceof RegExp)) {
+		throw new TypeError('Expected a RegExp');
 	}
 
-	if (replacement === undefined) {
-		throw new Error('The `replacement` option is required');
+	const flags = new Set(pattern.flags);
+	flags.add('g');
+
+	// Override case handling
+	if (forceIgnoreCase) {
+		flags.add('i');
+	} else if (forceIgnoreCase === false) {
+		flags.delete('i');
 	}
 
-	// Replace the replacement string with the string unescaped (only one backslash) if it's escaped
-	replacement = replacement
-		.replaceAll('\\n', '\n')
-		.replaceAll('\\r', '\r')
-		.replaceAll('\\t', '\t');
+	return new RegExp(pattern.source, [...flags].join(''));
+};
 
-	// TODO: Drop the `normalizePath` call when `convertPathToPattern` from `fast-glob` is added to globby.
-	filePaths = glob ? await globby(filePaths.map(filePath => normalizePath(filePath))) : [...new Set(filePaths.map(filePath => normalizePath(path.resolve(filePath))))];
+/**
+ * Replace matching strings and regexes in files.
+ * - If `find` is provided, `replacement` must be a string.
+ * - If `transform` is provided, it runs after all find/replace operations.
+ * - When `dryRun` is true, returns a list of proposed changes.
+ */
+export default async function replaceInFiles(
+	inputPaths,
+	{
+		find,
+		replacement,
+		ignoreCase = false,
+		glob = true,
+		dryRun = false,
+		transform,
+	} = {},
+) {
+	const filePathPatterns = toArray(inputPaths);
 
-	find = find.map(element => {
-		const iFlag = ignoreCase ? 'i' : '';
+	if (transform !== undefined && typeof transform !== 'function') {
+		throw new TypeError('The `transform` option must be a function');
+	}
 
-		if (typeof element === 'string') {
-			return new RegExp(escapeStringRegexp(element), `g${iFlag}`);
-		}
+	const hasFind = Array.isArray(find) && find.length > 0;
+	const hasTransform = typeof transform === 'function';
 
-		return new RegExp(element.source, `${element.flags.replace('i', '')}${iFlag}`);
-	});
+	if (!hasFind && !hasTransform) {
+		throw new Error('Expected at least one `find` pattern or a `transform` function');
+	}
+
+	if (hasFind && typeof replacement !== 'string') {
+		throw new TypeError('Expected `replacement` to be a string when `find` is provided');
+	}
+
+	// Resolve file paths
+	let filePaths;
+	if (glob) {
+		const patterns = filePathPatterns.map(p => normalizePath(p));
+		filePaths = await globby(patterns, {dot: true, absolute: true, expandDirectories: false});
+	} else {
+		filePaths = filePathPatterns.map(p => path.resolve(String(p)));
+	}
+
+	// De-duplicate
+	filePaths = [...new Set(filePaths)];
+
+	// Replace escape sequences in replacement if we have find patterns
+	if (hasFind && typeof replacement === 'string') {
+		replacement = replacement
+			.replaceAll('\\n', '\n')
+			.replaceAll('\\r', '\r')
+			.replaceAll('\\t', '\t');
+	}
+
+	// Prepare replacers
+	const replacers = hasFind
+		? toArray(find).map(pattern => {
+			if (typeof pattern === 'string') {
+				const flags = ignoreCase ? 'gi' : 'g';
+				return new RegExp(escapeStringRegexp(pattern), flags);
+			}
+
+			return normalizeRegex(pattern, ignoreCase);
+		})
+		: [];
 
 	const changes = [];
 
 	await Promise.all(filePaths.map(async filePath => {
-		const string = await fsPromises.readFile(filePath, 'utf8');
+		const originalContent = await fs.readFile(filePath, 'utf8');
 
-		let newString = string;
-		for (const pattern of find) {
-			newString = newString.replace(pattern, replacement);
+		let nextContent = originalContent;
+
+		for (const rx of replacers) {
+			nextContent = nextContent.replace(rx, replacement);
 		}
 
-		if (newString === string) {
+		if (hasTransform) {
+			nextContent = transform(nextContent, filePath);
+			if (typeof nextContent !== 'string') {
+				throw new TypeError('`transform` must return a string');
+			}
+		}
+
+		if (nextContent === originalContent) {
 			return;
 		}
 
 		if (dryRun) {
-			changes.push({
-				filePath,
-				originalContent: string,
-				newContent: newString,
-			});
-		} else {
-			await writeFileAtomic(filePath, newString);
+			changes.push({filePath, originalContent, newContent: nextContent});
+			return;
 		}
+
+		await writeFileAtomic(filePath, nextContent);
 	}));
 
 	if (dryRun) {

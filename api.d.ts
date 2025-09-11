@@ -4,13 +4,16 @@ export type FileChange = {
 	newContent: string;
 };
 
+export type ReplaceInFilesOptions = {
+	find?: Array<string | RegExp>;
+	replacement?: string; // Required when `find` exists
+	ignoreCase?: boolean;
+	glob?: boolean;
+	dryRun?: boolean;
+	transform?: (content: string, filePath: string) => string;
+};
+
 export default function replaceInFiles(
-	path: string | string[],
-	options: {
-		find: Array<string | RegExp>;
-		replacement: string;
-		ignoreCase?: boolean;
-		glob?: boolean;
-		dryRun?: boolean;
-	},
+	paths: string | readonly string[],
+	options?: ReplaceInFilesOptions,
 ): Promise<void | FileChange[]>;

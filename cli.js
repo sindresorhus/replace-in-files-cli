@@ -11,7 +11,7 @@ const cli = meow(`
 	Options
 	  --regex           Regex pattern to find  (Can be set multiple times)
 	  --string          String to find  (Can be set multiple times)
-	  --replacement     Replacement string  (Required)
+	  --replacement     Replacement string  (Required when using --regex/--string)
 	  --ignore-case     Search case-insensitively
 	  --no-glob         Disable globbing
 	  --dry-run         Show what would be replaced without making changes
@@ -39,7 +39,6 @@ const cli = meow(`
 		},
 		replacement: {
 			type: 'string',
-			isRequired: true,
 		},
 		ignoreCase: {
 			type: 'boolean',
@@ -61,10 +60,30 @@ if (cli.input.length === 0) {
 	process.exit(1);
 }
 
-if (!cli.flags.regex && !cli.flags.string) {
+const toArray = v => v === undefined ? [] : (Array.isArray(v) ? v : [v]);
+
+const findPatterns = [
+	...toArray(cli.flags.string),
+	...toArray(cli.flags.regex).map(rx => new RegExp(rx, 'g')),
+];
+
+if (findPatterns.length === 0) {
 	console.error('Specify at least `--regex` or `--string`');
 	process.exit(1);
 }
+
+if (findPatterns.length > 0 && typeof cli.flags.replacement !== 'string') {
+	console.error('The `--replacement` option is required when using `--string` or `--regex`');
+	process.exit(1);
+}
+
+const result = await replaceInFiles(cli.input, {
+	find: findPatterns,
+	replacement: cli.flags.replacement,
+	ignoreCase: cli.flags.ignoreCase,
+	glob: cli.flags.glob,
+	dryRun: cli.flags.dryRun,
+});
 
 function displayDryRunResults(changes) {
 	if (changes.length === 0) {
@@ -112,17 +131,6 @@ function highlightDifferences(text, otherText, color) {
 
 	return text.slice(0, start) + styleText(color, text.slice(start, end)) + text.slice(end);
 }
-
-const result = await replaceInFiles(cli.input, {
-	find: [
-		...cli.flags.string,
-		...cli.flags.regex.map(regexString => new RegExp(regexString, 'g')),
-	],
-	replacement: cli.flags.replacement,
-	ignoreCase: cli.flags.ignoreCase,
-	glob: cli.flags.glob,
-	dryRun: cli.flags.dryRun,
-});
 
 if (cli.flags.dryRun) {
 	displayDryRunResults(result);

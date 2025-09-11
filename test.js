@@ -90,3 +90,290 @@ test('--dry-run with regex', async t => {
 	t.true(stdout.includes('version 1.2.3 here'));
 	t.true(stdout.includes('version 2.0.0 here'));
 });
+
+test('prepend using regex ^', async t => {
+	const filePath = await tempWrite('line 1\nline 2');
+	await execa('./cli.js', ['--regex=^', '--replacement=PREPENDED: ', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'PREPENDED: line 1\nline 2');
+});
+
+test('append using regex $ with global flag', async t => {
+	const filePath = await tempWrite('line 1\nline 2');
+	await execa('./cli.js', ['--regex=$', '--replacement= :APPENDED', filePath]);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'line 1\nline 2 :APPENDED');
+});
+
+test('transform option - prepend', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('line 1\nline 2');
+
+	await replaceInFiles(filePath, {
+		transform: content => `PREPENDED\n${content}`,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'PREPENDED\nline 1\nline 2');
+});
+
+test('transform option - append', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('line 1\nline 2');
+
+	await replaceInFiles(filePath, {
+		transform: content => `${content}\nAPPENDED`,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'line 1\nline 2\nAPPENDED');
+});
+
+test('transform option - with file path parameter', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('content');
+
+	await replaceInFiles(filePath, {
+		transform: (content, path) => `FILE: ${path} | CONTENT: ${content}`,
+	});
+
+	const result = fs.readFileSync(filePath, 'utf8');
+	t.true(result.includes('FILE: ') && result.includes('CONTENT: content'));
+});
+
+test('transform option - dry run', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('original');
+
+	const changes = await replaceInFiles(filePath, {
+		transform: content => `transformed: ${content}`,
+		dryRun: true,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'original');
+	t.is(changes.length, 1);
+	t.is(changes[0].originalContent, 'original');
+	t.is(changes[0].newContent, 'transformed: original');
+});
+
+test('transform option - no change when content identical', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('unchanged');
+
+	const changes = await replaceInFiles(filePath, {
+		transform: content => content,
+		dryRun: true,
+	});
+
+	t.is(changes.length, 0);
+});
+
+test('transform option - error when not a function', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('content');
+
+	await t.throwsAsync(
+		replaceInFiles(filePath, {
+			transform: 'not a function',
+		}),
+		{
+			message: 'The `transform` option must be a function',
+		},
+	);
+});
+
+test('transform + find/replace - transform runs after find/replace', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello world!');
+
+	await replaceInFiles(filePath, {
+		find: ['world'],
+		replacement: 'universe',
+		transform: content => `BANNER\n${content}\nFOOTER`,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'BANNER\nHello universe!\nFOOTER');
+});
+
+test('transform + find/replace - dry run', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello world!');
+
+	const changes = await replaceInFiles(filePath, {
+		find: ['world'],
+		replacement: 'universe',
+		transform: content => `[${content}]`,
+		dryRun: true,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'Hello world!');
+	t.is(changes.length, 1);
+	t.is(changes[0].originalContent, 'Hello world!');
+	t.is(changes[0].newContent, '[Hello universe!]');
+});
+
+test('transform only - no find/replace required', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('content');
+
+	await replaceInFiles(filePath, {
+		transform: content => `wrapped: ${content}`,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'wrapped: content');
+});
+
+test('find/replace without transform - still works', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello world!');
+
+	await replaceInFiles(filePath, {
+		find: ['world'],
+		replacement: 'universe',
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'Hello universe!');
+});
+
+test('error when neither find nor transform provided', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('content');
+
+	await t.throwsAsync(
+		replaceInFiles(filePath, {}),
+		{
+			message: 'Expected at least one `find` pattern or a `transform` function',
+		},
+	);
+});
+
+test('ignoreCase overrides string patterns', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello WORLD world');
+
+	await replaceInFiles(filePath, {
+		find: ['world'],
+		replacement: 'universe',
+		ignoreCase: true,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'Hello universe universe');
+});
+
+test('ignoreCase overrides regex patterns', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello WORLD world');
+
+	await replaceInFiles(filePath, {
+		find: [/world/],
+		replacement: 'universe',
+		ignoreCase: true,
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'Hello universe universe');
+});
+
+test('ignoreCase overrides regex with existing i flag', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('Hello WORLD world');
+
+	await replaceInFiles(filePath, {
+		find: [/world/i],
+		replacement: 'universe',
+		ignoreCase: false, // Should remove the i flag
+	});
+
+	// Without ignoreCase, only lowercase 'world' should match
+	t.is(fs.readFileSync(filePath, 'utf8'), 'Hello WORLD universe');
+});
+
+test('multiple find patterns applied in order', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('apple banana cherry');
+
+	await replaceInFiles(filePath, {
+		find: ['apple', 'banana'],
+		replacement: 'fruit',
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'fruit fruit cherry');
+});
+
+test('no-op writes - unchanged files not touched', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('unchanged content');
+
+	const statBefore = await fs.promises.stat(filePath);
+
+	// Add a tiny delay to ensure mtime would change if file was written
+	await new Promise(resolve => {
+		setTimeout(resolve, 10);
+	});
+
+	await replaceInFiles(filePath, {
+		find: ['nonexistent'],
+		replacement: 'something',
+	});
+
+	const statAfter = await fs.promises.stat(filePath);
+
+	t.deepEqual(statBefore.mtime, statAfter.mtime);
+	t.is(fs.readFileSync(filePath, 'utf8'), 'unchanged content');
+});
+
+test('transform must return string', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('content');
+
+	await t.throwsAsync(
+		replaceInFiles(filePath, {
+			transform: () => 123, // Returns number instead of string
+		}),
+		{
+			message: '`transform` must return a string',
+		},
+	);
+});
+
+test('dry-run returns structured FileChange array', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('original content');
+
+	const changes = await replaceInFiles(filePath, {
+		find: ['original'],
+		replacement: 'modified',
+		dryRun: true,
+	});
+
+	t.true(Array.isArray(changes));
+	t.is(changes.length, 1);
+	t.is(changes[0].filePath, filePath);
+	t.is(changes[0].originalContent, 'original content');
+	t.is(changes[0].newContent, 'modified content');
+});
+
+test('file deduplication', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+	const filePath = await tempWrite('test content');
+
+	// Pass same file multiple times
+	await replaceInFiles([filePath, filePath, filePath], {
+		find: ['test'],
+		replacement: 'modified',
+	});
+
+	t.is(fs.readFileSync(filePath, 'utf8'), 'modified content');
+});
+
+test('globby options applied correctly', async t => {
+	const {default: replaceInFiles} = await import('./api.js');
+
+	// Create files and test absolute paths are returned
+	const filePath = await tempWrite('content');
+
+	const changes = await replaceInFiles([filePath], {
+		find: ['content'],
+		replacement: 'modified',
+		dryRun: true,
+	});
+
+	// Should have absolute path
+	t.is(changes.length, 1);
+	t.true(path.isAbsolute(changes[0].filePath));
+});
