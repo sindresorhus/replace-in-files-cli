@@ -40,7 +40,7 @@ Real-world use-case: [Bumping version number in a file when publishing to npm](h
 
 The regex should be [JavaScript flavor](https://www.regular-expressions.info/javascript.html).
 
-## Programmatic API
+## API
 
 You can also use this package programmatically:
 
@@ -65,8 +65,6 @@ await replaceInFiles('*.js', {
 	transform: (content, filePath) => `/* ${filePath} */\n${content}`
 });
 ```
-
-### Transform Option
 
 The `transform` option provides full control over file content:
 - **Standalone**: Use alone for prepend, append, or complex transformations

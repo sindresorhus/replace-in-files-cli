@@ -35,11 +35,12 @@ const normalizeRegex = (pattern, forceIgnoreCase) => {
 };
 
 /**
- * Replace matching strings and regexes in files.
- * - If `find` is provided, `replacement` must be a string.
- * - If `transform` is provided, it runs after all find/replace operations.
- * - When `dryRun` is true, returns a list of proposed changes.
- */
+Replace matching strings and regexes in files.
+
+- If `find` is provided, `replacement` must be a string.
+- If `transform` is provided, it runs after all find/replace operations.
+- When `dryRun` is true, returns a list of proposed changes.
+*/
 export default async function replaceInFiles(
 	inputPaths,
 	{
@@ -72,6 +73,7 @@ export default async function replaceInFiles(
 	let filePaths;
 	if (glob) {
 		const patterns = filePathPatterns.map(p => normalizePath(p));
+		// TODO: Look into using built-in glob when targeting Node.js 24.
 		filePaths = await globby(patterns, {dot: true, absolute: true, expandDirectories: false});
 	} else {
 		filePaths = filePathPatterns.map(p => path.resolve(String(p)));
@@ -83,9 +85,9 @@ export default async function replaceInFiles(
 	// Replace escape sequences in replacement if we have find patterns
 	if (hasFind && typeof replacement === 'string') {
 		replacement = replacement
-			.replaceAll('\\n', '\n')
-			.replaceAll('\\r', '\r')
-			.replaceAll('\\t', '\t');
+			.replaceAll(String.raw`\n`, '\n')
+			.replaceAll(String.raw`\r`, '\r')
+			.replaceAll(String.raw`\t`, '\t');
 	}
 
 	// Prepare replacers
